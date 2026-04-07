@@ -1,0 +1,13 @@
+<form method="post">
+    {% csrf_token %}
+    
+    {% if form.errors %}
+        <div style="color: red; border: 1px solid red; padding: 10px; margin-bottom: 10px;">
+            <p>Le formulaire contient des erreurs :</p>
+            {{ form.errors }}
+        </div>
+    {% endif %}
+
+    {{ form.as_p }}
+    <button type="submit">S'inscrire</button>
+</form>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 20px;">
+    <h2>Tableau de bord des Projets</h2>
+
+    <div style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+        {% for m in memberships %}
+        <div style="border: 1px solid #ddd; padding: 15px; border-radius: 10px; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h3 style="margin-top: 0; color: #2c3e50;">{{ m.project.name }}</h3>
+            <p style="color: #7f8c8d; font-size: 0.9em;">{{ m.project.description|truncatewords:15 }}</p>
+            <p><strong>Votre rôle :</strong> <span style="color: #3498db;">{{ m.get_role_display }}</span></p>
+            
+            <div style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+                <a href="{% url 'project_board' m.project.id %}" style="padding: 6px 12px; background: #34495e; color: white; text-decoration: none; border-radius: 4px; font-size: 0.85em;">
+                    Accéder au Kanban
+                </a>
+
+                <a href="{% url 'create_ticket' m.project.id %}" style="padding: 6px 12px; background: #27ae60; color: white; text-decoration: none; border-radius: 4px; font-size: 0.85em;">
+                    + Nouveau Ticket
+                </a>
+                
+                {% if m.role == 'PM' %}
+                    <a href="{% url 'invite_member' m.project.id %}" style="padding: 6px 12px; background: #f39c12; color: white; text-decoration: none; border-radius: 4px; font-size: 0.85em;">
+                        + Membre
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #f9f9f9; border-radius: 10px;">
+            <p>Vous n'êtes membre d'aucun projet. Contactez un administrateur.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

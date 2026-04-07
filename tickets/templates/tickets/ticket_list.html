@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Liste des tickets - {{ project.name }}</h2>
+
+<form method="get" style="background: #f4f4f4; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <select name="status">
+        <option value="">Tous les statuts</option>
+        {% for code, name in status_choices %}
+            <option value="{{ code }}">{{ name }}</option>
+        {% endfor %}
+    </select>
+    
+    <select name="priority">
+        <option value="">Toutes les priorités</option>
+        <option value="HIGH">Haute</option>
+        <option value="MEDIUM">Moyenne</option>
+        <option value="LOW">Faible</option>
+    </select>
+
+    <button type="submit">Filtrer</button>
+</form>
+
+<table border="1" width="100%" style="border-collapse: collapse;">
+    <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Assigné à</th>
+            <th>Statut</th>
+            <th>Priorité</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets %}
+        <tr>
+            <td><a href="{% url 'ticket_detail' ticket.id %}">{{ ticket.title }}</a></td>
+            <td>{{ ticket.assignee.username|default:"-" }}</td>
+            <td>{{ ticket.get_status_display }}</td>
+            <td>{{ ticket.priority }}</td>
+            <td><a href="{% url 'ticket_detail' ticket.id %}">Voir</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Aucun ticket trouvé.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

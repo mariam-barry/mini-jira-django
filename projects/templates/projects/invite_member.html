@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #fff;">
+    <h2>Inviter un membre au projet : {{ project.name }}</h2>
+    <p style="color: #666;">En tant que Chef de Projet, vous pouvez ajouter des collaborateurs ici.</p>
+    <hr>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 15px;">
+            {{ form.as_p }}
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button type="submit" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                Ajouter au projet
+            </button>
+            <a href="{% url 'project_list' %}" style="margin-left: 15px; color: #666; text-decoration: none;">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

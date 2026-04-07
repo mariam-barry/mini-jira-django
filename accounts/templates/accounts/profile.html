@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block content %}
+<h2>Gestion de mon Profil</h2>
+<ul>
+    <li><strong>Nom d'utilisateur :</strong> {{ user.username }}</li>
+    <li><strong>Email :</strong> {{ user.email }}</li>
+    <li><strong>Rôle sur la plateforme :</strong> {{ user.get_role_display }}</li>
+    <li><strong>Date d'inscription :</strong> {{ user.date_joined|date:"d M Y" }}</li>
+</ul>
+
+<p><a href="{% url 'logout' %}">Se déconnecter</a></p>
+{% endblock %}
