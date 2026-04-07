@@ -1,15 +1,61 @@
 {% extends "base.html" %}
 
-{% block title %}Connexion{% endblock %}
-
-{% block page_header %}
-<h1>Connexion</h1>
-{% endblock %}
+{% block title %}Connexion - Mini Jira{% endblock %}
 
 {% block content %}
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Se connecter</button>
-</form>
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h3 class="mb-0"><i class="bi bi-person-circle me-2"></i>Connexion</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm">
+                                Se connecter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                </div>
+            
+            <div class="text-center mt-3">
+                <a href="/" class="text-muted small text-decoration-none">← Retour à l'accueil</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Applique automatiquement les classes Bootstrap aux champs générés par Django
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        el.classList.add('form-control');
+    });
+</script>
 {% endblock %}

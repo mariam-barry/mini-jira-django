@@ -1,79 +1,114 @@
 {% extends "base.html" %}
 
+{% block title %}Tableau Kanban - {{ project.name }}{% endblock %}
+
 {% block content %}
-<div style="padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<div class="container-fluid px-4 py-3">
     
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-4 rounded-3 shadow-sm border">
         <div>
-            <h2 style="margin: 0; color: #172b4d;">Tableau Kanban : {{ project.name }}</h2>
-            <p style="margin: 5px 0 0; color: #6b778c; font-size: 0.9rem;">Gérez l'avancement des tâches en temps réel.</p>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'project_list' %}" class="text-decoration-none">Projets</a></li>
+                    <li class="breadcrumb-item active text-muted">{{ project.name }}</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0 text-dark fw-bold">
+                <i class="bi bi-kanban-fill me-2 text-primary"></i>Tableau de Bord
+            </h1>
         </div>
-        <a href="{% url 'create_ticket' project.id %}" style="background-color: #27ae60; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: background 0.3s;">
-            + Nouveau Ticket
-        </a>
+        <div class="d-flex gap-3">
+            {% if user.role == 'PM' %}
+            <a href="{% url 'sprint_list' project.id %}" class="btn btn-outline-primary btn-lg px-4 shadow-sm">
+                <i class="bi bi-calendar-event me-2"></i>Sprints
+            </a>
+            {% endif %}
+
+            {% if user.role == 'REQUESTER' or user.role == 'PM' %}
+            <a href="{% url 'create_ticket' project.id %}" class="btn btn-success btn-lg px-4 shadow-sm">
+                <i class="bi bi-plus-lg me-2"></i>Nouveau Ticket
+            </a>
+            {% endif %}
+        </div>
     </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div style="padding: 12px; margin-bottom: 20px; border-radius: 6px; border: 1px solid; 
-                {% if message.tags == 'error' %} background-color: #fff1f0; color: #cf1322; border-color: #ffa39e; 
-                {% else %} background-color: #f6ffed; color: #389e0d; border-color: #b7eb8f; {% endif %}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <hr style="border: 0; border-top: 1px solid #ebedf0; margin-bottom: 30px;">
-
-    <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; align-items: flex-start;">
+    <div class="row g-4 flex-nowrap overflow-auto pb-5" style="min-height: 85vh;">
         
         {% for status_code, tickets in kanban.items %}
-        <div style="flex: 1; min-width: 300px; background-color: #f4f5f7; border-radius: 10px; padding: 15px; box-shadow: inset 0 0 5px rgba(0,0,0,0.05);">
-            
-            <h3 style="text-align: center; font-size: 0.85rem; color: #5e6c84; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1px;">
-                {{ status_code }} <span style="background: #dfe1e6; padding: 2px 8px; border-radius: 10px; margin-left: 5px;">{{ tickets|length }}</span>
-            </h3>
-            
-            <div style="min-height: 500px;">
-                {% for ticket in tickets %}
-                    <div style="background: white; margin-bottom: 15px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-left: 6px solid {% if ticket.priority == 'HIGH' %}#e74c3c{% elif ticket.priority == 'MEDIUM' %}#f1c40f{% else %}#3498db{% endif %}; transition: transform 0.2s;">
-                        
-                        <div style="margin-bottom: 12px;">
-                            <a href="{% url 'ticket_detail' ticket.id %}" style="text-decoration: none; color: #172b4d; font-weight: 600; font-size: 1rem; display: block; line-height: 1.4;">
-                                {{ ticket.title }}
-                            </a>
-                        </div>
+        <div class="col-12" style="min-width: 350px; width: 350px;">
+            <div class="bg-light rounded-4 p-3 border shadow-sm h-100 d-flex flex-column">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+                    <h6 class="text-uppercase fw-bolder text-dark mb-0" style="letter-spacing: 1.5px; font-size: 0.9rem;">
+                        {% if status_code == 'TODO' %}
+                            <i class="bi bi-circle me-2 text-secondary"></i>À FAIRE
+                        {% elif status_code == 'IN_PROGRESS' %}
+                            <i class="bi bi-play-circle me-2 text-primary"></i>EN COURS
+                        {% elif status_code == 'REVIEW' %}
+                            <i class="bi bi-eye me-2 text-warning"></i>RÉVISION
+                        {% elif status_code == 'DONE' %}
+                            <i class="bi bi-check-all me-2 text-success"></i>TERMINÉ
+                        {% else %}{{ status_code }}{% endif %}
+                    </h6>
+                    <span class="badge bg-dark rounded-pill px-3">{{ tickets|length }}</span>
+                </div>
 
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #f0f0f0;">
-                            <span style="font-size: 0.7rem; background: #ebf5ff; color: #0052cc; padding: 3px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">
-                                {{ ticket.get_type_display }}
-                            </span>
+                <div class="kanban-column flex-grow-1" style="overflow-y: auto;">
+                    {% for ticket in tickets %}
+                        <div class="card mb-3 border-0 shadow-sm border-start border-5 
+                            {% if ticket.priority == 'HIGH' %}border-danger
+                            {% elif ticket.priority == 'MEDIUM' %}border-warning
+                            {% else %}border-info{% endif %} card-hover">
                             
-                            <form action="{% url 'update_status' ticket.id %}" method="post" style="margin: 0;">
-                                {% csrf_token %}
-                                <select name="status" onchange="this.form.submit()" style="font-size: 0.75rem; border: 1px solid #dfe1e6; background: #ffffff; cursor: pointer; border-radius: 4px; padding: 4px; color: #172b4d;">
-                                    <option value="TODO" {% if ticket.status == 'TODO' %}selected{% endif %}>To Do</option>
-                                    <option value="IN_PROGRESS" {% if ticket.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
-                                    <option value="REVIEW" {% if ticket.status == 'REVIEW' %}selected{% endif %}>Review</option>
-                                    <option value="DONE" {% if ticket.status == 'DONE' %}selected{% endif %}>Done</option>
-                                </select>
-                            </form>
-                        </div>
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <a href="{% url 'ticket_detail' ticket.id %}" class="text-decoration-none text-dark h5 d-block mb-1 fw-bold">
+                                        {{ ticket.title }}
+                                    </a>
+                                    <small class="text-muted">#TK-{{ ticket.id }}</small>
+                                </div>
 
-                        <div style="margin-top: 10px; display: flex; align-items: center; justify-content: flex-end;">
-                            <small style="color: #6b778c; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;" title="Assigné à">
-                                <span style="background: #34495e; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">
-                                    {{ ticket.assignee.username|slice:":1"|upper }}
-                                </span>
-                                {{ ticket.assignee.username|default:"Non assigné" }}
-                            </small>
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+                                    <span class="badge {% if ticket.type == 'BUG' %}bg-danger{% else %}bg-primary{% endif %} rounded-1">
+                                        {{ ticket.get_type_display }}
+                                    </span>
+
+                                    {% if user.role == 'DEVELOPER' or user.role == 'PM' %}
+                                    <form action="{% url 'update_status' ticket.id %}" method="post" class="m-0">
+                                        {% csrf_token %}
+                                        <select name="status" onchange="this.form.submit()" class="form-select form-select-sm fw-bold border-0 bg-white shadow-sm">
+                                            <option value="TODO" {% if ticket.status == 'TODO' %}selected{% endif %}>To Do</option>
+                                            <option value="IN_PROGRESS" {% if ticket.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                                            <option value="REVIEW" {% if ticket.status == 'REVIEW' %}selected{% endif %}>Review</option>
+                                            <option value="DONE" {% if ticket.status == 'DONE' %}selected{% endif %}>Done</option>
+                                        </select>
+                                    </form>
+                                    {% else %}
+                                    <span class="badge bg-white text-dark border shadow-sm">{{ ticket.get_status_display }}</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                                    <div class="text-muted">
+                                        <i class="bi bi-hourglass-split me-1"></i>
+                                        <span class="fw-bold">{{ ticket.time_spent }}h</span>
+                                    </div>
+                                    <div class="d-flex align-items-center bg-white border rounded-pill px-2 py-1 shadow-xs">
+                                        <span class="text-dark small me-2 fw-bold">{{ ticket.assignee.username|default:"-" }}</span>
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                                            {{ ticket.assignee.username|slice:":1"|upper|default:"?" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                {% empty %}
-                    <div style="text-align: center; color: #a5adba; padding: 40px 10px; border: 2px dashed #dfe1e6; border-radius: 8px;">
-                        <p style="font-size: 0.85rem; margin: 0;">Aucun ticket ici</p>
-                    </div>
-                {% endfor %}
+                    {% empty %}
+                        <div class="text-center py-5 border border-2 border-dashed rounded-4 text-muted bg-white opacity-50">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            Aucun ticket
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -82,10 +117,29 @@
 </div>
 
 <style>
-    /* Petit effet au survol des cartes */
-    div[style*="background: white"]:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.12) ;
+    .card-hover {
+        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    }
+    .card-hover:hover {
+        transform: scale(1.02);
+        box-shadow: 0 14px 28px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.1) ;
+    }
+    
+    .row.flex-nowrap::-webkit-scrollbar {
+        height: 12px;
+    }
+    .row.flex-nowrap::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    .row.flex-nowrap::-webkit-scrollbar-thumb {
+        background: #0d6efd;
+        border-radius: 10px;
+        border: 3px solid #f1f1f1;
+    }
+    
+    .kanban-column::-webkit-scrollbar {
+        width: 0px;
     }
 </style>
 {% endblock %}

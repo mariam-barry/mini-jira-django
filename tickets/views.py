@@ -13,14 +13,9 @@ User = get_user_model()
 
 @login_required
 def ticket_list(request, project_id):
-    """
-    Écran : Liste tickets (Point 5)
-    Affiche les tickets d'un projet avec filtres.
-    """
     project = get_object_or_404(Project, id=project_id)
     tickets = Ticket.objects.filter(project=project).select_related('assignee', 'reporter')
 
-    # Récupération des filtres depuis l'URL
     status_filter = request.GET.get('status')
     priority_filter = request.GET.get('priority')
     assignee_filter = request.GET.get('assignee')
@@ -32,7 +27,6 @@ def ticket_list(request, project_id):
     if assignee_filter:
         tickets = tickets.filter(assignee_id=assignee_filter)
 
-    # Pour le menu déroulant des membres dans le filtre
     members = User.objects.filter(project_memberships__project=project)
 
     return render(request, 'tickets/ticket_list.html', {
@@ -45,16 +39,17 @@ def ticket_list(request, project_id):
 
 @login_required
 def create_ticket(request, project_id):
-    """
-    Écran : Création de ticket (Point 5)
-    """
     project = get_object_or_404(Project, id=project_id)
+   
+   
+    if request.user.role not in ['REQ', 'REQUESTER', 'Demandeur', 'PM']:
+        messages.error(request, "Seul le Demandeur ou le PM peut créer un ticket.")
+        return redirect('project_board', project_id=project.id)
     
     if request.method == 'POST':
         form = TicketForm(request.POST, project=project)
         if form.is_valid():
             try:
-                # On utilise le service pour garantir les règles métier
                 TicketService.create_ticket(
                     project=project, 
                     reporter=request.user, 
@@ -67,17 +62,10 @@ def create_ticket(request, project_id):
     else:
         form = TicketForm(project=project)
         
-    return render(request, 'tickets/ticket_form.html', {
-        'form': form, 
-        'project': project
-    })
+    return render(request, 'tickets/ticket_form.html', {'form': form, 'project': project})
 
 @login_required
 def ticket_detail(request, ticket_id):
-    """
-    Écran : Détail ticket (Point 5)
-    Gère aussi l'ajout de commentaires (Point 3).
-    """
     ticket = get_object_or_404(Ticket, id=ticket_id)
     comments = ticket.comments.all().order_by('-created_at')
     
@@ -102,36 +90,41 @@ def ticket_detail(request, ticket_id):
 
 @login_required
 def update_status(request, ticket_id):
-    """
-    Action : Workflow (Point 4)
-    Met à jour le statut via le Service.
-    """
     ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    
+    roles_autorises = ['DEV', 'DEVELOPER', 'Développeur', 'PM']
+    if request.user.role not in roles_autorises:
+        messages.error(request, f"Rôle '{request.user.role}' non autorisé à modifier le statut.")
+        return redirect('ticket_detail', ticket_id=ticket.id)
     
     if request.method == 'POST':
         new_status = request.POST.get('status')
         try:
-            # Appel au service pour gérer la logique de transition
             TicketService.update_ticket_status(ticket, new_status, request.user)
-            messages.success(request, f"Statut mis à jour vers {ticket.get_status_display()}.")
+            messages.success(request, f"Statut mis à jour : {ticket.get_status_display()}")
         except ValidationError as e:
             messages.error(request, e.message)
             
     return redirect('ticket_detail', ticket_id=ticket.id)
 
-
-
 @login_required
 def log_time(request, ticket_id):
-    if request.method == "POST":
-        ticket = get_object_or_404(Ticket, id=ticket_id)
-        # On récupère la valeur envoyée par le formulaire
-        hours_to_add = request.POST.get('hours')
-        
-        if hours_to_add and int(hours_to_add) > 0:
-            ticket.time_spent += int(hours_to_add)
-            ticket.save()
-            messages.success(request, f"{hours_to_add} heures ajoutées au ticket.")
-        
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    
+    if request.user.role not in ['DEV', 'DEVELOPER', 'Développeur']:
+        messages.error(request, "Action réservée aux Développeurs.")
         return redirect('ticket_detail', ticket_id=ticket.id)
-    return redirect('project_list')
+
+    if request.method == "POST":
+        hours = request.POST.get('hours')
+        if hours:
+            try:
+                ticket.time_spent += float(hours)
+                ticket.save()
+                messages.success(request, f"{hours}h ajoutées au compteur.")
+            except ValueError:
+                messages.error(request, "Veuillez entrer un nombre valide.")
+            
+    return redirect('ticket_detail', ticket_id=ticket.id)

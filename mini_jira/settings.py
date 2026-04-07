@@ -136,8 +136,9 @@ STATIC_URL = 'static/'
 AUTH_USER_MODEL = "accounts.CustomUser" # dit a django  d utiliser ce model pour l authentidication
 
 
-LOGIN_REDIRECT_URL = 'profile'      # Où aller après s'être connecté 
-LOGOUT_REDIRECT_URL = 'login' # Où aller après s'être déconnecté
-LOGIN_URL = 'login'           # L'URL par défaut pour demander une connexion
+      
+LOGIN_URL = 'login'              
+LOGIN_REDIRECT_URL = 'project_list'  # Où aller après la connexion
+LOGOUT_REDIRECT_URL = 'login'     # Où aller après la déconnexion
 
 LOGOUT_ON_GET = True
